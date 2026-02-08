@@ -3,74 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Operations Portal</title>
+    <title>IT LogBook Vercel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
     <style>
-        body {
-            background-color: #f4f6f9;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .login-card {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-        .brand-logo {
-            width: 60px; height: 60px;
-            background-color: #000;
-            color: #fff;
-            border-radius: 12px;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 1.5rem; font-weight: bold;
-            margin: 0 auto 20px;
-        }
-        .btn-google {
-            background-color: #d4a017; /* Emas */
-            color: white;
-            font-weight: 600;
-            padding: 12px;
-            border-radius: 8px;
-            width: 100%;
-            border: none;
-            transition: all 0.2s;
-        }
-        .btn-google:hover {
-            background-color: #b88a10;
-            transform: translateY(-2px);
-        }
+        :root { --primary: #d4a017; --bg: #f4f6f9; }
+        body { background: var(--bg); font-family: sans-serif; overflow-x: hidden; }
+        
+        /* Sidebar & Layout */
+        .sidebar { width: 260px; height: 100vh; position: fixed; background: #fff; padding: 20px; border-right: 1px solid #eee; display: flex; flex-direction: column; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        
+        /* Profile Card */
+        .profile-card { background: #fdfdfd; border: 1px solid #eee; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .avatar { width: 40px; height: 40px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        
+        /* Stats Cards */
+        .stat-card { background: #fff; border: none; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); text-align: center; }
+        .stat-num { font-size: 2rem; font-weight: bold; color: var(--primary); }
+        
+        /* Mobile */
+        @media(max-width:768px) { .sidebar { display:none; } .main-content { margin-left:0; } }
+        
+        /* Loading Overlay */
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:999; display:flex; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
 
-    <div class="login-card">
-        <div class="brand-logo">IT</div>
-        <h4 class="mb-2 fw-bold">IT Operations LogBook</h4>
-        <p class="text-muted mb-4 small">Secure Access for IT Ops Team</p>
-        
-        <a id="loginBtn" href="#" class="btn btn-google shadow-sm">
-            <i class="bi bi-google me-2"></i> Login with Google
-        </a>
+    <div id="loader"><div class="spinner-border text-warning"></div></div>
 
-        <div class="mt-4 text-muted" style="font-size: 0.7rem;">
-            &copy; 2026 IT Operations GoWork
+    <div class="modal fade" id="loginModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title">IT LogBook Login</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Please enter your work email to continue.</p>
+                    <input type="email" id="inputEmail" class="form-control" placeholder="name@go-work.com">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-dark" onclick="saveUser()">Login Access</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script>
-        // --- MASUKKAN LINK GOOGLE SCRIPT TERBARU DI BAWAH INI ---
-        var scriptUrl = "https://script.google.com/a/macros/go-work.com/s/AKfycbxWEFNa6Arg1B3ec4B8A7UEjn06jGWYfSSw9dGKkHXdKXzEHXhnZglCHKoHGhZJGBhm/exec";
+    <div class="sidebar">
+        <h4 class="fw-bold mb-4"><span class="badge bg-dark">IT</span> LogBook</h4>
         
-        document.getElementById('loginBtn').href = scriptUrl;
-    </script>
+        <div class="profile-card">
+            <div class="avatar" id="avText">U</div>
+            <div style="overflow:hidden;">
+                <div class="fw-bold small" id="uName">Guest</div>
+                <div class="text-muted small" style="font-size:0.7rem;" id="uEmail">Not Logged In</div>
+            </div>
+        </div>
 
+        <button class="btn btn-warning text-white w-100 mb-3 fw-bold" onclick="showSection('form')">
+            <i class="bi bi-pencil-square"></i> New Issue
+        </button>
+        <button class="btn btn-light w-100 text-start" onclick="showSection('dash')">
+            <i class="bi bi-grid"></i> Dashboard
+        </button>
+    </div>
+
+    <div class="main-content">
+        
+        <div id="sect-dash">
+            <h3 class="mb-4 fw-bold">Dashboard Overview</h3>
+            <div class="row g-3">
+                <div class="col-md-3"><div class="stat-card"><h5>Pending</h5><div class="stat-num" id="stat-open">-</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><h5>Today</h5><div class="stat-num" id="stat-today">-</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><h5>This Month</h5><div class="stat-num" id="stat-month">-</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><h5>Total</h5><div class="stat-num" id="stat-total">-</div></div></div>
+            </div>
+        </div>
+
+        <div id="sect-form" style="display:none;">
+            <h3 class="mb-4 fw-bold">New Issue Entry</h3>
+            <div class="card p-4 border-0 shadow-sm">
+                <form id="issueForm" onsubmit="submitForm(event)">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label>Date Issue</label>
+                            <input type="date" class="form-control" name="dateIssue" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Time Issue</label>
+                            <input type="time" class="form-control" name="timeIssue" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Location</label>
+                            <select class="form-select" name="location">
+                                <option>BSD GOP 1</option><option>RDTX Square</option><option>Menara Rajawali</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Issue Type</label>
+                            <select class="form-select" name="issueType">
+                                <option>User</option><option>Specific Area</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label>Description</label>
+                            <textarea class="form-control" name="issueDesc" rows="3"></textarea>
+                        </div>
+                        
+                        <input type="hidden" name="pic" id="formPic">
+                    </div>
+                    <button type="submit" class="btn btn-success mt-4 px-5">Submit Data</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- 1. CONFIG (PASTE URL GOOGLE SCRIPT ANDA DISINI) ---
+        const API_URL = "https://script.google.com/macros/s/AKfycbxJrJYnLiYkBGPyN0rYRozsx7aJrhqx_FFD45WX_cKuE71ClTSQi1JZw2vGFU-2wymf0g/exec"; 
+
+        // --- 2. STARTUP ---
+        window.onload = function() {
+            checkLogin();
+            loadDashboard();
+        };
+
+        // --- 3. LOGIN SIMULATION (Local Storage) ---
+        function checkLogin() {
+            var user = localStorage.getItem("itops_user");
+            if (!user) {
+                var myModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                myModal.show();
+            } else {
+                updateProfileUI(user);
+            }
+        }
+
+        function saveUser() {
+            var email = document.getElementById("inputEmail").value;
+            if(email) {
+                localStorage.setItem("itops_user", email);
+                updateProfileUI(email);
+                bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+            }
+        }
+
+        function updateProfileUI(email) {
+            document.getElementById("uEmail").innerText = email;
+            var name = email.split('@')[0].toUpperCase(); // Surya.Jaya -> SURYA.JAYA
+            document.getElementById("uName").innerText = name.replace('.',' ');
+            document.getElementById("avText").innerText = name.charAt(0);
+            
+            // Set PIC otomatis di Form
+            document.getElementById("formPic").value = name.replace('.',' ');
+        }
+
+        // --- 4. LOAD DATA DASHBOARD (FETCH API) ---
+        function loadDashboard() {
+            fetch(API_URL + "?action=getDashboard")
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("stat-total").innerText = data.total;
+                document.getElementById("stat-open").innerText = data.open;
+                document.getElementById("stat-today").innerText = data.today;
+                document.getElementById("stat-month").innerText = data.month;
+                document.getElementById("loader").style.display = 'none';
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Gagal load data. Cek Koneksi.");
+                document.getElementById("loader").style.display = 'none';
+            });
+        }
+
+        // --- 5. SUBMIT FORM (POST API) ---
+        function submitForm(e) {
+            e.preventDefault();
+            document.getElementById("loader").style.display = 'flex';
+
+            // Ambil Data Form
+            var formData = new FormData(e.target);
+            var object = {};
+            formData.forEach((value, key) => object[key] = value);
+            
+            // Tambahan Data Default jika kosong
+            object.type = "Issue"; 
+            object.requestor = "User"; 
+
+            // Kirim ke Google Script (mode no-cors untuk bypass error browser, walau response limited)
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify(object)
+            })
+            .then(res => res.json())
+            .then(result => {
+                alert("Berhasil! Data tersimpan.");
+                e.target.reset();
+                loadDashboard(); // Refresh angka
+                document.getElementById("loader").style.display = 'none';
+                showSection('dash');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Karena CORS kadang bikin error palsu padahal data masuk:
+                alert("Data dikirim (Cek Spreadsheet)."); 
+                document.getElementById("loader").style.display = 'none';
+            });
+        }
+
+        // --- 6. NAVIGASI ---
+        function showSection(id) {
+            document.getElementById('sect-dash').style.display = 'none';
+            document.getElementById('sect-form').style.display = 'none';
+            
+            document.getElementById('sect-' + id).style.display = 'block';
+        }
+    </script>
 </body>
 </html>
